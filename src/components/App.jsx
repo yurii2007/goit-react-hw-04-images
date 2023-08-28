@@ -20,7 +20,7 @@ export const App = () => {
     if(!query) return
     setIsLoading(true);
     getImages(query,page).then(({totalHits,hits})=>{
-      setImages([...images,...hits]);
+      setImages(prevImgs=>[...prevImgs,...hits])
       setIsLoadMore(totalHits > 0 && page < Math.ceil(totalHits / 12))
     }).catch(()=>alert('Oops, something went wrong')).finally(setIsLoading(false))
   },[query,page])
