@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { getImages } from '../helpers/pixabay-api';
 import { SearchBar } from './SearchBar/SearchBar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
@@ -7,68 +7,55 @@ import { DivElem } from './App.styled';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    isLoading: false,
-    isModalShow: false,
-    modalImg: null,
-    isLoadMore: false,
+export const App = () => {
+  const [query,setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalShow, setModalShow] = useState(false);
+  const [modalImg, setModalImg] = useState(null);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+
+  useEffect(()=>{
+    if(!query) return
+    setIsLoading(true);
+    getImages(query,page).then(({totalHits,hits})=>{
+      setImages([...images,...hits]);
+      setIsLoadMore(totalHits > 0 && page < Math.ceil(totalHits / 12))
+    }).catch(()=>alert('Oops, something went wrong')).finally(setIsLoading(false))
+  },[query,page])
+
+  const handleSearch = query => {
+   setQuery(query);
+   setPage(1);
+   setImages([]);
   };
 
-  async componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
-    if (query !== prevState.query || page !== prevState.page) {
-      this.setState({ isLoading: true });
-      try {
-        const { totalHits, hits } = await getImages(query, page);
-          this.setState(prevState => ({
-            isLoadMore: totalHits > 0 && page < Math.ceil(totalHits / 12),
-            images: [...prevState.images,...hits],
-          }));
-      } catch (error) {
-        return alert('Oops, something went wrong');
-      } finally {
-        this.setState({
-          isLoading: false,
-        });
-      }
-    }
-  }
-
-  handleSearch = query => {
-    this.setState({ query, page: 1,images: [] });
+  const loadMore = () => {
+    setPage(prevPage=>prevPage + 1)
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleModalOpen = modalImg => {
+    setModalImg(modalImg);
+    setModalShow(true)
   };
 
-  handleModalOpen = modalImg => {
-    this.setState({ isModalShow: true, modalImg });
+  const handleModalClose = () => {
+    setModalShow(false)
   };
 
-  handleModalClose = () => {
-    this.setState({ isModalShow: false });
-  };
-
-  render() {
-    const { images, isLoading, isModalShow, modalImg, isLoadMore,query } = this.state;
     return (
       <DivElem>
-        <SearchBar onSubmit={this.handleSearch} />
+        <SearchBar onSubmit={handleSearch} />
         {isLoading && <Loader />}
         {(images.length === 0 && query) && (
           <p>Sorry, we didn't found pictures for this query</p>
         )}
-        <ImageGallery images={images} modalOpen={this.handleModalOpen} />
-        {isLoadMore && <Button onLoadMore={this.loadMore} />}
+        <ImageGallery images={images} modalOpen={handleModalOpen} />
+        {isLoadMore && <Button onLoadMore={loadMore} />}
         {isModalShow && (
-          <Modal onModalClose={this.handleModalClose} image={modalImg} />
+          <Modal onModalClose={handleModalClose} image={modalImg} />
         )}
       </DivElem>
     );
   }
-}
