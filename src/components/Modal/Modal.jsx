@@ -3,18 +3,19 @@ import { useEffect } from 'react';
 import { ModalElem } from './Modal.styled';
 
 export const Modal = ({ onModalClose, image }) => {
-  const handleKeyDown = event => {
-    if (event.key === 'Escape') {
-      onModalClose();
-    }
-  };
+  
 
   useEffect(() => {
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') {
+        onModalClose();
+      }
+    }
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  });
+  },[onModalClose]);
 
   const handleBackdropClose = event => {
     if (event.target === event.currentTarget) {
