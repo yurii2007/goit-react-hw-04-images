@@ -11,23 +11,25 @@ export const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalShow, setModalShow] = useState(false);
   const [modalImg, setModalImg] = useState(null);
   const [isLoadMore, setIsLoadMore] = useState(false);
 
   useEffect(() => {
     if (!query) return;
-    setIsLoading('idle');
-    getImages(query, page)
-      .then(({ totalHits, hits }) => {
+    setIsLoading(true);
+    (async () => {
+      try {
+        const { totalHits, hits } = await getImages(query, page);
         setImages(prevImgs => [...prevImgs, ...hits]);
         setIsLoadMore(totalHits > 0 && page < Math.ceil(totalHits / 12));
-        setIsLoading('success')
-      })
-      .catch(() => {
-        setIsLoading('rejected')
-        alert('Oops, something went wrong')})
+      } catch (error) {
+        alert('Oops, something went wrong');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, [query, page]);
 
   const handleSearch = query => {
@@ -52,7 +54,7 @@ export const App = () => {
   return (
     <DivElem>
       <SearchBar onSubmit={handleSearch} />
-      {isLoading === 'idle' && <Loader />}
+      {isLoading  && <Loader />}
       {images.length === 0 && query && (
         <p>Sorry, we didn't found pictures for this query</p>
       )}
